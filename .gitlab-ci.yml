@@ -1,0 +1,16 @@
+# GitLab CI 流水线：运行接口自动化测试并归档 Allure 结果
+stages:
+  - test
+
+test:
+  stage: test
+  image: python:3.12
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - python -m pytest --alluredir=reports/allure-results
+  artifacts:
+    when: always
+    paths:
+      - reports/allure-results
+    expire_in: 7 days

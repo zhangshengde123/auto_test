@@ -1,0 +1,39 @@
+# 示例用例：使用免费测试接口 JSONPlaceholder（GET 稳定，无鉴权）
+# 测试人员只需照这个格式编写，无需改任何代码
+name: 演示模块 - 免费测试接口
+variables:
+  user_id: 1
+
+cases:
+  - name: 查询指定用户的待办事项
+    tags: [smoke, P0]
+    request:
+      method: GET
+      url: /todos/$user_id
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.userId, 1]
+      - exists: [body.id]
+
+  - name: 查询第二个待办事项
+    tags: [P1]
+    request:
+      method: GET
+      url: /todos/2
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.userId, 1]
+      - contains: [body.title, quis]
+
+  - name: 创建新帖子（POST 演示）
+    tags: [P1]
+    request:
+      method: POST
+      url: /posts
+      json:
+        title: 自动化测试
+        body: hello
+        userId: $user_id
+    validate:
+      - eq: [status_code, 201]
+      - eq: [body.title, 自动化测试]

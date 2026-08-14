@@ -1,0 +1,5 @@
+# 测试结果通知配置（企业微信/钉钉机器人 webhook）
+# enabled 为 false 时不发送；接入后填 webhook 并设 enabled: true
+enabled: false
+type: wecom          # wecom=企业微信, dingtalk=钉钉
+webhook: ""          # 机器人 webhook 地址

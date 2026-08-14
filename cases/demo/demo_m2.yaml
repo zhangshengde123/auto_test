@@ -1,0 +1,38 @@
+# 示例用例：演示 M2 能力（公共函数 / extract 跨用例传值 / JSON Schema 校验）
+name: 演示模块 - M2 能力
+cases:
+  - name: 查询待办并提取用户ID
+    tags: [smoke, P0]
+    request:
+      method: GET
+      url: /todos/1
+    extract:
+      user_id: body.userId              # 提取响应 userId 到共享上下文
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.userId, 1]
+      - schema: [body, {type: object, required: [id, userId, title]}]
+
+  - name: 用提取的用户ID查询用户信息
+    tags: [P1]
+    request:
+      method: GET
+      url: /users/$user_id               # 引用上一个用例提取的 user_id
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.id, $user_id]          # 期望值保留 int 类型，避免类型不匹配
+      - schema: [body, {type: object, required: [id, name, username]}]
+
+  - name: 创建帖子（随机标题演示公共函数）
+    tags: [P1]
+    request:
+      method: POST
+      url: /posts
+      json:
+        title: ${random_string(10)}      # 调用公共函数生成随机标题
+        body: 内容
+        userId: 1
+    validate:
+      - eq: [status_code, 201]
+      - eq: [body.userId, 1]
+      - exists: [body.id]

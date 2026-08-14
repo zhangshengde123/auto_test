@@ -1,0 +1,14 @@
+# 示例用例：演示 Excel 数据驱动（每行数据生成一个用例实例）
+name: 演示模块 - Excel 数据驱动
+data:
+  file: data/todo_ids.xlsx     # Excel 路径（相对项目根），首行为表头
+  # sheet: 待办                 # 可选，默认第一个 sheet
+cases:
+  - name: 查询待办事项-数据驱动
+    tags: [P0]
+    request:
+      method: GET
+      url: /todos/$todo_id      # $todo_id 来自 Excel 的 todo_id 列
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.id, $todo_id]

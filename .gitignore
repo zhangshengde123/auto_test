@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# pytest
+.pytest_cache/
+
+# Allure 报告（生成物）
+reports/
+
+# Claude Code 本地配置
+.claude/
+
+# IDE
+.idea/
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Excel 临时锁文件
+~$*
+
+# 学习资料（单独管理，不进框架仓库）
+论文综述/
