@@ -172,6 +172,18 @@ pytest -n 4     # 已内置 --dist=loadgroup，无需额外参数
 
 在 `common/functions.py` 里定义函数（函数名不要以 `_` 开头），YAML 即可通过 `${函数名(参数)}` 调用。
 
+## 运行日志
+
+每次运行会在 `logs/test.log` 落一份纯文本日志（同时打印到控制台），用于用例失败排查。
+
+- **位置**：`logs/test.log`（每次运行覆盖上一次）
+- **级别**：默认 `INFO`；设环境变量 `LOG_LEVEL=DEBUG` 打印完整请求/响应头与 body
+- **排查**：失败时按用例名 grep，例如 `grep "用例名" logs/test.log`，可看到请求/响应/断言失败详情/异常堆栈
+
+```bash
+LOG_LEVEL=DEBUG pytest     # 更详细（含请求/响应头与 body）
+```
+
 ## 测试报告（Allure）
 
 报告按 YAML 的模块名（feature）、用例名（title）、tags 展示，并附带每个用例的请求/响应附件。
