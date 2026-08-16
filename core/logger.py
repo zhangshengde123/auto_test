@@ -45,7 +45,7 @@ def setup_logging(level=None, log_dir=None):
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
     except OSError:
-        logging.getLogger(__name__).warning("日志目录不可写，降级为仅控制台输出")
+        logger.warning("日志目录不可写，降级为仅控制台输出")
 
     _initialized = True
 

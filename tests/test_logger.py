@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """core.logger 单元测试（单独运行：pytest tests/test_logger.py -v）。"""
+import logging
+
 from core import logger
 
 
@@ -36,3 +38,20 @@ def test_setup_is_idempotent(tmp_path, monkeypatch):
     before = len(log.handlers)
     logger.setup_logging()
     assert len(log.handlers) == before
+
+
+def _raise_oserror(*args, **kwargs):
+    raise OSError("permission denied")
+
+
+def test_unwritable_dir_degrades_to_console(tmp_path, monkeypatch):
+    logger._reset()
+    monkeypatch.setenv("LOG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOG_LEVEL", "INFO")
+    monkeypatch.setattr("os.makedirs", _raise_oserror)
+
+    logger.setup_logging()  # 不应抛异常
+
+    log = logger.get_logger()
+    assert not any(isinstance(h, logging.FileHandler) for h in log.handlers)
+    assert any(isinstance(h, logging.StreamHandler) for h in log.handlers)

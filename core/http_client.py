@@ -16,13 +16,15 @@ class HttpClient:
 
     def request(self, method, url, **kwargs):
         kwargs.setdefault("timeout", self.timeout)
-        start = time.perf_counter()
-        resp = self.session.request(method.upper(), url, **kwargs)
-        elapsed_ms = (time.perf_counter() - start) * 1000
-
-        logger.info("请求 %s %s", method.upper(), url)
+        method = method.upper()
+        logger.info("请求 %s %s", method, url)
         logger.debug("请求头 %s", kwargs.get("headers"))
         logger.debug("请求体 %s", _body_of(kwargs))
+
+        start = time.perf_counter()
+        resp = self.session.request(method, url, **kwargs)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+
         logger.info("响应 %s %s（耗时 %.0fms）", resp.status_code, url, elapsed_ms)
         logger.debug("响应头 %s", resp.headers)
         logger.debug("响应体 %s", resp.text)
