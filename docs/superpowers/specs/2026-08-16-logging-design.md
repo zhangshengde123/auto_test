@@ -56,14 +56,13 @@
 对外函数：
 
 - `setup_logging(level=None, log_dir=None)`：幂等初始化名为 `autotest` 的 logger（`propagate=False`，避免污染 root/第三方库日志），配置两个 handler：
-  - `FileHandler` → `{log_dir}/test.log`，编码 UTF-8，`mode='a'`。
+  - `FileHandler` → `{log_dir}/{文件名}`，编码 UTF-8，`mode='w'`（每次运行覆盖上次日志）。文件名按进程区分：无 `PYTEST_XDIST_WORKER` 时写 `test.log`，xdist worker 写 `test-{worker}.log`。
   - `StreamHandler` → 控制台（stderr）。
   - 统一格式：`%(asctime)s [%(levelname)s] %(message)s`。
   - `level` 与 `log_dir` 为空时分别从环境变量 `LOG_LEVEL`（默认 `INFO`）、`LOG_DIR`（默认 `logs`）读取。
   - 幂等：若已初始化过，直接返回，避免重复添加 handler。
   - 失败降级：目录不可写等异常时捕获并降级为仅控制台，不阻断测试。
 - `get_logger()`：返回 `logging.getLogger("autotest")`。
-- `clear_log_file(log_dir=None)`：清空日志文件（仅主进程调用一次，保证每次运行覆盖上次日志）。
 
 ### 4.3 埋点
 
@@ -87,10 +86,11 @@
 
 ### 4.4 xdist 并发处理
 
-`pytest -n 4` 时主进程与各 worker 独立进程。策略：
+`pytest -n 4` 时主进程与各 worker 是独立进程，多进程同时写同一文件会导致日志损坏（丢行、重复、多字节字符被拆断）。策略：
 
-- 文件 handler 统一 `mode='a'` 追加到 `logs/test.log`。为保证"每次运行覆盖"，主进程在 `pytest_configure` 中先清空该文件（`open(path, 'w').close()`）；pytest-xdist 的 worker 进程（通过 `PYTEST_XDIST_WORKER` 环境变量识别）不重复清空，直接 append。
-- 并发写入可能出现行交错，纯文本调试场景可接受（每条日志含时间戳，可 grep 定位）。
+- **每进程独立日志文件**：文件名按进程区分——无 `PYTEST_XDIST_WORKER` 时写 `logs/test.log`，xdist worker（`PYTEST_XDIST_WORKER=gw0` 等）写 `logs/test-gw0.log` 等。每个文件只有一个写者，彻底消除竞争。
+- `mode='w'` 打开：每个进程在 `pytest_configure` 初始化时截断自己的文件，天然实现"每次运行覆盖上次日志"，无需额外的清空步骤。
+- 串行（`pytest`）时所有日志落在 `logs/test.log`；并发（`pytest -n N`）时排查用 `grep` 跨 `logs/test-*.log`。
 
 ## 5. 日志级别语义
 
@@ -112,7 +112,7 @@
 ## 7. 数据流
 
 ```
-conftest.pytest_configure ──> setup_logging()（初始化根 logger）
+conftest.pytest_configure ──> setup_logging()（初始化 autotest logger）
         │
         ▼
 runner.run_case ──> logger.info(用例开始)
@@ -138,11 +138,11 @@ pytest 标记失败 ──> Allure 附件 / 结果通知（现有逻辑不变）
 1. 运行 demo 用例：`pytest`，确认控制台出现日志、`logs/test.log` 生成。
 2. 故意让一条用例断言失败，确认日志文件与控制台均能看到：用例名、请求 method+url、响应状态码、断言失败详情、异常堆栈。
 3. 设置 `LOG_LEVEL=DEBUG` 运行，确认请求/响应头 + body 原样打印。
-4. 运行 `pytest -n 4`，确认并发下日志仍正常写入 `logs/test.log`。
+4. 运行 `pytest -n 4`，确认每个 worker 写独立的 `logs/test-gw*.log`，无丢行/重复/乱码。
 
 ## 10. 文档
 
-README.md 新增"日志"小节：说明日志位置（`logs/test.log`）、级别（`LOG_LEVEL`）、如何按用例名 grep 排查。
+README.md 新增"日志"小节：说明日志位置（串行 `logs/test.log`、并发 `logs/test-gw*.log`）、级别（`LOG_LEVEL`）、如何按用例名 grep 排查。
 
 ## 11. 范围边界
 
