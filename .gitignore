@@ -9,8 +9,8 @@ __pycache__/
 # Allure 报告（生成物）
 reports/
 
-# Claude Code 本地配置
-.claude/
+# Claude Code 本地配置（不提交）
+.claude/settings.local.json
 
 # IDE
 .idea/
