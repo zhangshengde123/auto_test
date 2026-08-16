@@ -24,6 +24,7 @@ class HttpClient:
         logger.debug("请求头 %s", kwargs.get("headers"))
         logger.debug("请求体 %s", _body_of(kwargs))
         logger.info("响应 %s %s（耗时 %.0fms）", resp.status_code, url, elapsed_ms)
+        logger.debug("响应头 %s", resp.headers)
         logger.debug("响应体 %s", resp.text)
         return resp
 
