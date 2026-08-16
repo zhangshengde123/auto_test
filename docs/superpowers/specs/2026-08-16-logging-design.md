@@ -77,7 +77,7 @@
 - 用例开始：`INFO` 记录 `用例开始：{模块名}::{用例名}`。
 - extract：`DEBUG` 记录 `提取 {key} = {value}`。
 - 断言结果：断言失败通过捕获的 `AssertionError` 用 `ERROR` 记录 `断言失败：{模块}::{用例} — {异常消息}`（异常消息已含操作符/表达式/期望/实际值，由 `validators.py` 抛出的 `AssertionError` 文案提供）；断言通过不逐条记录。
-- 结果：`INFO` 记录 `用例结束：PASS` 或 `用例结束：FAIL`。
+- 结果：成功时 `INFO` 记录 `用例结束：PASS`；失败时由 `断言失败` / `用例异常` 两条 `ERROR` 记录（见下），不再额外记 FAIL 汇总行。
 - 异常：捕获 `AssertionError` / 其他异常 → `ERROR` 记录 `用例失败：{异常}` 并 `logging` 输出 traceback → 重新 `raise`（保证 pytest 仍标记失败，Allure 附件与结果通知不受影响）。
 
 `conftest.py`：
@@ -96,7 +96,7 @@
 
 | 级别 | 内容 |
 |------|------|
-| INFO（默认） | 用例开始/结束、请求 method+url、响应状态码与耗时、PASS/FAIL |
+| INFO（默认） | 用例开始/成功结束、请求 method+url、响应状态码与耗时 |
 | DEBUG | 额外打印完整请求/响应头 + body（原样，不脱敏）、extract |
 | ERROR | 用例失败、断言失败详情、异常与 traceback |
 
