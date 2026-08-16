@@ -13,11 +13,19 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from core.logger import clear_log_file, setup_logging  # noqa: E402
 from core.notifier import notify  # noqa: E402
 from core.yaml_loader import load_cases  # noqa: E402
 
 # 记录每个用例的执行结果，供 session 结束时的结果通知使用
 _results = {}
+
+
+def pytest_configure(config):
+    setup_logging()
+    # 每次运行覆盖上次日志：仅主进程清空一次；xdist worker 不清空，避免互相覆盖
+    if os.environ.get("PYTEST_XDIST_WORKER") is None:
+        clear_log_file()
 
 
 def pytest_generate_tests(metafunc):
