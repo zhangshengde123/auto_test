@@ -3,7 +3,8 @@
 
 - 使用独立 logger "autotest"（propagate=False），避免污染 root / 第三方库日志。
 - 初始化幂等；目录不可写时降级为仅控制台，不阻断测试。
-- 日志文件 `{LOG_DIR}/test.log`，每次运行由主进程清空一次（见 conftest.py）。
+- 并发（pytest-xdist）下每个进程写独立文件（test.log / test-{worker}.log），
+  避免多进程写同一文件导致日志损坏；mode="w" 实现每次运行覆盖上次日志。
 """
 import logging
 import os
@@ -20,7 +21,7 @@ def get_logger():
 
 
 def setup_logging(level=None, log_dir=None):
-    """幂等配置 "autotest" logger：StreamHandler(stderr) + FileHandler(logs/test.log)。"""
+    """幂等配置 "autotest" logger：StreamHandler(stderr) + FileHandler(logs/<文件名>)。"""
     global _initialized
     if _initialized:
         return
@@ -39,7 +40,7 @@ def setup_logging(level=None, log_dir=None):
     try:
         os.makedirs(log_dir, exist_ok=True)
         file_handler = logging.FileHandler(
-            os.path.join(log_dir, "test.log"), encoding="utf-8", mode="a"
+            os.path.join(log_dir, _log_filename()), encoding="utf-8", mode="w"
         )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -49,15 +50,10 @@ def setup_logging(level=None, log_dir=None):
     _initialized = True
 
 
-def clear_log_file(log_dir=None):
-    """清空日志文件（仅主进程调用一次，保证每次运行覆盖上次日志）。"""
-    log_dir = log_dir or os.environ.get("LOG_DIR", os.path.join(BASE_DIR, "logs"))
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-        with open(os.path.join(log_dir, "test.log"), "w", encoding="utf-8"):
-            pass
-    except OSError:
-        pass
+def _log_filename():
+    """并发（pytest-xdist）下每个进程写独立文件，避免多进程写同一文件损坏。"""
+    worker = os.environ.get("PYTEST_XDIST_WORKER")
+    return f"test-{worker}.log" if worker else "test.log"
 
 
 def _resolve_level(level):

@@ -176,9 +176,9 @@ pytest -n 4     # 已内置 --dist=loadgroup，无需额外参数
 
 每次运行会在 `logs/test.log` 落一份纯文本日志（同时打印到控制台），用于用例失败排查。
 
-- **位置**：`logs/test.log`（每次运行覆盖上一次）
+- **位置**：串行运行写 `logs/test.log`；`pytest -n N` 并发时每个 worker 写独立的 `logs/test-gw*.log`（每次运行覆盖上一次）
 - **级别**：默认 `INFO`；设环境变量 `LOG_LEVEL=DEBUG` 打印完整请求/响应头与 body
-- **排查**：失败时按用例名 grep，例如 `grep "用例名" logs/test.log`，可看到请求/响应/断言失败详情/异常堆栈
+- **排查**：失败时按用例名 grep，例如 `grep "用例名" logs/test*.log`，可看到请求/响应/断言失败详情/异常堆栈
 
 ```bash
 LOG_LEVEL=DEBUG pytest     # 更详细（含请求/响应头与 body）
