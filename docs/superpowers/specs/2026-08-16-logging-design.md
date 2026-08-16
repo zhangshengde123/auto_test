@@ -53,16 +53,17 @@
 
 ### 4.2 `core/logger.py`
 
-对外两个函数：
+对外函数：
 
-- `setup_logging(level=None, log_dir=None)`：幂等初始化根 logger，配置两个 handler：
-  - `FileHandler` → `{log_dir}/test.log`，编码 UTF-8，`mode='w'`。
+- `setup_logging(level=None, log_dir=None)`：幂等初始化名为 `autotest` 的 logger（`propagate=False`，避免污染 root/第三方库日志），配置两个 handler：
+  - `FileHandler` → `{log_dir}/test.log`，编码 UTF-8，`mode='a'`。
   - `StreamHandler` → 控制台（stderr）。
   - 统一格式：`%(asctime)s [%(levelname)s] %(message)s`。
   - `level` 与 `log_dir` 为空时分别从环境变量 `LOG_LEVEL`（默认 `INFO`）、`LOG_DIR`（默认 `logs`）读取。
   - 幂等：若已初始化过，直接返回，避免重复添加 handler。
   - 失败降级：目录不可写等异常时捕获并降级为仅控制台，不阻断测试。
-- `get_logger(name)`：返回 `logging.getLogger(name)`。
+- `get_logger()`：返回 `logging.getLogger("autotest")`。
+- `clear_log_file(log_dir=None)`：清空日志文件（仅主进程调用一次，保证每次运行覆盖上次日志）。
 
 ### 4.3 埋点
 
