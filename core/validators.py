@@ -62,12 +62,23 @@ def _schema(resp, expr, schema):
         raise AssertionError(f"JSON Schema 校验失败: {e.message} (路径: {path})")
 
 
+def _is_json(resp):
+    """断言响应体是合法的 JSON 格式。"""
+    try:
+        resp.json()
+    except ValueError:
+        raise AssertionError(
+            f"断言失败: 响应不是合法的 JSON 格式，Content-Type={resp.headers.get('Content-Type')!r}"
+        )
+
+
 VALIDATORS = {
     "eq": _eq,
     "ne": _ne,
     "contains": _contains,
     "exists": _exists,
     "schema": _schema,
+    "is_json": _is_json,
 }
 
 

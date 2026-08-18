@@ -108,6 +108,7 @@ cases:                              # 用例列表（按顺序执行）
 | `contains` | `contains: [取值表达式, 子串]` | 包含子串 |
 | `exists` | `exists: [取值表达式]` | 字段存在 |
 | `schema` | `schema: [取值表达式, JSON Schema]` | JSON Schema 结构校验 |
+| `is_json` | `is_json: []` | 响应体为合法 JSON |
 
 ### 取值表达式（断言/extract 通用）
 
