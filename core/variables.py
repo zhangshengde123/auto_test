@@ -4,6 +4,7 @@ import re
 
 from .functions import call_function
 
+# 分组：1=花括号内名字 2=函数参数（仅 ${fn(args)} 存在） 3=裸 $name 的名字
 _PATTERN = re.compile(r"\$\{(\w+)(?:\(([^)]*)\))?\}|\$(\w+)")
 
 
@@ -18,27 +19,23 @@ def substitute(obj, ctx):
     return obj
 
 
+def _resolve(name, args, ctx):
+    """求值单个引用：带参数走函数调用，无参数取变量（返回原值，保留类型）。"""
+    if args is not None:
+        return call_function(name, args)
+    if name not in ctx:
+        raise KeyError(f"变量未定义: {name}")
+    return ctx[name]
+
+
 def _sub_str(s, ctx):
-    # 1) 整个字符串是函数调用 ${fn(args)} → 直接调用返回
-    m = re.fullmatch(r"\$\{(\w+)\(([^)]*)\)\}", s)
+    # 整个字符串是单个引用 → 返回原值（保留 int/list/dict 等类型）
+    m = _PATTERN.fullmatch(s)
     if m:
-        return call_function(m.group(1), m.group(2))
+        return _resolve(m.group(1) or m.group(3), m.group(2), ctx)
 
-    # 2) 整个字符串是变量 $name / ${name} → 返回原值（保留 int/list/dict 等类型）
-    m = re.fullmatch(r"\$\{(\w+)\}|\$(\w+)", s)
-    if m:
-        name = m.group(1) or m.group(2)
-        if name not in ctx:
-            raise KeyError(f"变量未定义: {name}")
-        return ctx[name]
-
-    # 3) 混合字符串 → 逐处替换并转成字符串
+    # 混合字符串 → 逐处替换并转成字符串
     def repl(m):
-        if m.group(1) is not None and m.group(2) is not None:
-            return str(call_function(m.group(1), m.group(2)))
-        name = m.group(1) or m.group(3)
-        if name not in ctx:
-            raise KeyError(f"变量未定义: {name}")
-        return str(ctx[name])
+        return str(_resolve(m.group(1) or m.group(3), m.group(2), ctx))
 
     return _PATTERN.sub(repl, s)

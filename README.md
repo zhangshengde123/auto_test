@@ -17,6 +17,10 @@ pytest -n 4
 # 按标记运行（冒烟）
 pytest -m smoke
 
+pytest -k "case下的yaml文件名称"  # 只跑某个 YAML 文件
+pytest -k "查询待办并提取用户ID" # 只跑某条用例
+pytest -m smoke / pytest -m P0  # 按tag跑
+
 # 切换环境
 TEST_ENV=prod pytest
 ```
